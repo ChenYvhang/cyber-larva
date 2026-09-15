@@ -1,0 +1,27 @@
+{
+  "engine": "MuJoCo 3.13.0",
+  "duration_s": 12,
+  "targets": {
+    "median_speed_bl_s": 0.29956921677197035,
+    "p95_speed_bl_s": 0.6395836569537227,
+    "turn_curvature_rad_bl": 1.0607115854371794,
+    "crawl_frequency_hz": 1.4100529693226007,
+    "head_cast_rate_hz": 0.11079311229509625
+  },
+  "observed": {
+    "median_speed_bl_s": 0.2943769215840377,
+    "p95_speed_bl_s": 0.5712475554059274,
+    "turn_curvature_rad_bl": 0.8107821864021703,
+    "mean_contacts": 9.831666666666667,
+    "crawl_frequency_hz": 1.4100529693226007,
+    "head_cast_rate_hz": 0.11079311229509625
+  },
+  "relative_error": {
+    "median_speed_bl_s": 0.017332539183707116,
+    "p95_speed_bl_s": 0.10684466497044924,
+    "turn_curvature_rad_bl": 0.2356242756903603,
+    "crawl_frequency_hz": 0.0,
+    "head_cast_rate_hz": 0.0
+  },
+  "pass": true
+}

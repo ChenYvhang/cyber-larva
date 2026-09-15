@@ -1,0 +1,15 @@
+import {chromium} from 'playwright';
+const browser=await chromium.launch({channel:'msedge',headless:true,args:['--enable-webgl','--ignore-gpu-blocklist']});
+const page=await browser.newPage({viewport:{width:1440,height:960}}),errors=[];
+page.on('pageerror',e=>errors.push(e.message));
+await page.goto('http://127.0.0.1:8775');
+await page.waitForFunction(()=>window.cyberLarvaReady,null,{timeout:60000});
+await page.locator('#play').click();
+await page.waitForFunction(()=>parseFloat(document.getElementById('simtime').textContent)>.5,null,{timeout:60000});
+await page.locator('#play').click();await page.waitForTimeout(1200);
+await page.screenshot({path:'preview.png'});
+await page.locator('#macro').click();await page.waitForTimeout(700);await page.screenshot({path:'preview-macro.png'});
+const report=await page.evaluate(async()=>({ready:window.cyberLarvaReady,status:document.getElementById('status').textContent,source:document.getElementById('source').textContent,active:document.getElementById('active').textContent,fps:document.getElementById('fps').textContent,state:await(await fetch('/api/state')).json()}));
+await page.locator('#editor').click();await page.waitForTimeout(500);const edited=await page.evaluate(async()=>{let before=await(await fetch('/api/world')).json();await fetch('/api/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'paint',tool:'fungus',x:3,y:3})});let after=await(await fetch('/api/world')).json();return after.revision>before.revision&&after.items.some(x=>x.kind==='fungus'&&x.x===3.5)});
+console.log(JSON.stringify({ready:report.ready,status:report.status,source:report.source,active:report.active,fps:report.fps,segments:report.state.segments.length,edited,errors},null,2));
+await browser.close();if(errors.length||!edited||report.state.segments.length!==11)process.exitCode=1;
