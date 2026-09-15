@@ -25,6 +25,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+      - run: npm ci
       - run: node tools/build-pages.mjs
       - uses: actions/configure-pages@v5
         with:
