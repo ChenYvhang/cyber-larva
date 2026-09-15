@@ -32,6 +32,7 @@ class NeuralState:
     backward: float
     turn: float
     head_sweep: float
+    knockout_count: int
 
 
 class ConnectomeBrain:
@@ -41,6 +42,7 @@ class ConnectomeBrain:
         self.n = 512
         self.W = None
         self.groups: dict[str, np.ndarray] = {}
+        self.neurons: list[dict] = []
         pack = data_dir / "winding_l1_connectome.npz"
         meta = data_dir / "groups.json"
         if pack.exists() and meta.exists() and sparse is not None:
@@ -60,6 +62,20 @@ class ConnectomeBrain:
             order = np.arange(self.n)
             self.groups = {m: order[i * 18:(i + 1) * 18] for i, m in enumerate(MODALITIES)}
             self.groups["dn_vnc"] = order[-96:]
+        identity = data_dir / "neurons.json"
+        if identity.exists():
+            self.neurons = json.loads(identity.read_text(encoding="utf-8"))
+        if len(self.neurons) != self.n:
+            membership: dict[int, list[str]] = {}
+            for name, indices in self.groups.items():
+                for index in indices:
+                    membership.setdefault(int(index), []).append(name)
+            self.neurons = [
+                {"index": i, "id": str(i), "side": "", "celltype": "",
+                 "annotations": ", ".join(membership.get(i, [])), "cluster": ""}
+                for i in range(self.n)
+            ]
+        self.disabled = np.zeros(self.n, dtype=bool)
         self.v = self.rng.normal(0, .02, self.n).astype(np.float32)
         self.rate = np.zeros(self.n, dtype=np.float32)
         self.refrac = np.zeros(self.n, dtype=np.int8)
@@ -78,6 +94,36 @@ class ConnectomeBrain:
     def reset(self):
         self.v.fill(0); self.rate.fill(0); self.refrac.fill(0); self.last_spikes.fill(0); self.t = 0
 
+    def set_knockout(self, indices, mode: str = "set") -> dict:
+        clean = sorted({int(i) for i in indices if 0 <= int(i) < self.n})
+        if mode == "set": self.disabled.fill(False); self.disabled[clean] = True
+        elif mode == "add": self.disabled[clean] = True
+        elif mode == "remove": self.disabled[clean] = False
+        else: raise ValueError("敲除模式必须是 set、add 或 remove")
+        self.v[self.disabled] = 0; self.rate[self.disabled] = 0
+        self.refrac[self.disabled] = 0; self.last_spikes[self.disabled] = 0
+        return self.knockout_state()
+
+    def knockout_state(self) -> dict:
+        indices = np.flatnonzero(self.disabled).tolist()
+        return {"count": len(indices), "indices": indices,
+                "neurons": [self.neurons[i] for i in indices[:80]],
+                "kind": "acute functional silencing"}
+
+    def neuron_catalog(self, query: str = "", limit: int = 60) -> list[dict]:
+        query = query.strip().lower(); limit = max(1, min(int(limit), 200))
+        selected = np.flatnonzero(self.disabled)
+        selected_set = set(int(i) for i in selected)
+        result = []
+        for neuron in self.neurons:
+            haystack = " ".join(str(neuron.get(k, "")) for k in
+                                ("index", "id", "side", "celltype", "annotations", "cluster")).lower()
+            if query and query not in haystack: continue
+            item = dict(neuron); item["disabled"] = int(item["index"]) in selected_set
+            result.append(item)
+            if len(result) >= limit: break
+        return result
+
     def _indices(self, name: str) -> np.ndarray:
         aliases = {"warm": "thermo_warm", "cold": "thermo_cold", "touch": "mechano"}
         return self.groups.get(name, self.groups.get(aliases.get(name, ""), np.empty(0, dtype=np.int32)))
@@ -87,19 +133,23 @@ class ConnectomeBrain:
         substeps = 4
         spikes = self.last_spikes
         for _ in range(substeps):
+            spikes[self.disabled] = 0
             syn = self.W @ (spikes * self.sign) if self.W is not None else 0
             drive = self.bias + np.asarray(syn, dtype=np.float32).reshape(-1) * .22
             for name in MODALITIES:
                 idx = self._indices(name)
                 if len(idx): drive[idx] += float(senses.get(name, 0)) * .65
-            live = self.refrac <= 0
+            drive[self.disabled] = 0
+            live = (self.refrac <= 0) & ~self.disabled
             self.v[live] = self.v[live] * .86 + drive[live]
             self.v += self.rng.normal(0, .012, self.n).astype(np.float32)
             spikes = (self.v > .5).astype(np.float32)
+            spikes[self.disabled] = 0; self.v[self.disabled] = 0
             self.v[spikes > 0] = 0
             self.refrac = np.maximum(self.refrac - 1, 0)
             self.refrac[spikes > 0] = 2
             self.rate = self.rate * .91 + spikes * 9.
+            self.rate[self.disabled] = 0
         self.last_spikes = spikes
         self.t += dt
         def activity(idx): return float(np.mean(self.rate[idx])) if len(idx) else 0.
@@ -114,4 +164,5 @@ class ConnectomeBrain:
         sweep = np.clip(.22 + (1 - odor) * .55 + abs(turn) * .25, 0, 1)
         return NeuralState(int(np.count_nonzero(self.rate > .5)), float(self.rate.mean()),
                            activity(self.dn), (time.perf_counter()-started)*1000, self.source,
-                           float(forward), float(backward), float(turn), float(sweep))
+                           float(forward), float(backward), float(turn), float(sweep),
+                           int(np.count_nonzero(self.disabled)))

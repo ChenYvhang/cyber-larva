@@ -7,6 +7,7 @@ from cyberlarva.world import LarvaWorld
 from cyberlarva.physics import MuJoCoLarva
 
 world=LarvaWorld();brain=ConnectomeBrain(ROOT/'data'/'connectome');physics=MuJoCoLarva(world,ROOT/'config'/'trajectory_calibration.json')
+target=int(brain.forward_dn[0]);brain.set_knockout([target])
 start=(world.x,world.y)
 speeds=[];contacts=[]
 for _ in range(100):
@@ -18,4 +19,8 @@ assert len(world.segments)==11
 assert world.distance>0
 assert pose['engine'].startswith('MuJoCo') and max(contacts)>0
 assert 0<=neural.forward<=1 and -1<=neural.turn<=1
+assert neural.knockout_count==1 and brain.disabled[target]
+assert brain.v[target]==0 and brain.rate[target]==0 and brain.last_spikes[target]==0
+assert brain.neuron_catalog(str(brain.neurons[target]['id']),10)
+brain.set_knockout([], 'set');assert not brain.disabled.any()
 print({'neurons':brain.n,'connections':brain.W.nnz,'active':neural.active,'distance':round(world.distance,3),'speed_bl_s':round(sum(speeds)/len(speeds),3),'contacts':round(sum(contacts)/len(contacts),1),'engine':pose['engine'],'source':neural.source})

@@ -25,8 +25,16 @@ def main():
         groups[name]=sorted(set(found))
     rows=ann[ann.celltype.str.fullmatch('DN-VNC',case=False)]
     groups['dn_vnc']=sorted(set(lookup[x] for c in ('left_id','right_id') for x in rows[c] if x in lookup))
+    neurons=[{'index':i,'id':str(neuron_id),'side':'','celltype':'','annotations':'','cluster':''} for i,neuron_id in enumerate(ids)]
+    for _,row in ann.iterrows():
+        for column,side in (('left_id','left'),('right_id','right')):
+            neuron_id=row[column]
+            if neuron_id in lookup:
+                neurons[lookup[neuron_id]].update(side=side,celltype=row.get('celltype',''),
+                    annotations=row.get('additional_annotations',''),cluster=row.get('level_7_cluster',''))
     args.out.mkdir(parents=True,exist_ok=True); sparse.save_npz(args.out/'winding_l1_connectome.npz',weights,compressed=True)
     (args.out/'groups.json').write_text(json.dumps(groups,indent=2),encoding='utf-8')
+    (args.out/'neurons.json').write_text(json.dumps(neurons,indent=2),encoding='utf-8')
     print(f'Saved {weights.shape[0]} neurons, {weights.nnz:,} nonzero connections; groups:',{k:len(v) for k,v in groups.items()})
 
 if __name__=='__main__': main()

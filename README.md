@@ -68,6 +68,23 @@ Run `python tools/validate_calibration.py` after changing physics parameters. It
 5. Paired axial/hinge actuators deform the 11-segment MuJoCo body; ventral pads and mouth hooks exchange real forces with the substrate.
 6. MuJoCo contact, body stretch and pose return to the sensory encoder.
 
+## Virtual neuron silencing
+
+Open **神经元沉默实验** in the right panel to search all 2,952 connectome nodes by original skeleton ID, side, cell type, annotation, or cluster. Selecting a neuron clamps its membrane potential, spike output, and filtered firing rate to zero at every neural substep. Multiple neurons can be selected and restored independently; every intervention is timestamped in `/api/state`.
+
+This operation represents acute functional silencing, not developmental ablation. It is useful for controlled in-silico comparisons, but single-neuron phenotypes must not yet be treated as biological predictions: neurotransmitter signs, membrane parameters, DN functional partitions, and the VNC-to-muscle readout contain explicit model assumptions.
+
+`tools/prepare_connectome.py` generates the local searchable `neurons.json` identity table alongside the sparse topology. These generated data are ignored by Git and are not redistributed. Without that file the interface remains usable with connectome indices and functional group labels.
+
+Programmatic controls:
+
+```text
+GET  /api/neurons?q=DN-VNC&limit=60
+POST /api/command  {"action":"knockout","mode":"add","indices":[37]}
+POST /api/command  {"action":"knockout","mode":"remove","indices":[37]}
+POST /api/command  {"action":"clear_knockout"}
+```
+
 ## Scientific references
 
 - Winding, M. et al. (2023). *The connectome of an insect brain*. Science 379, eadd9330. https://doi.org/10.1126/science.add9330

@@ -1,6 +1,6 @@
 # Connectome runtime data
 
-The files `winding_l1_connectome.npz` and `groups.json` are generated locally by
+The files `winding_l1_connectome.npz`, `groups.json`, and `neurons.json` are generated locally by
 `tools/prepare_connectome.py` from Supplementary Data S1 of Winding et al.
 (Science, 2023; DOI: 10.1126/science.add9330).
 

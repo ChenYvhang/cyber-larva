@@ -14,7 +14,7 @@ class Simulation:
         self.physics=MuJoCoLarva(self.world,ROOT/'config'/'trajectory_calibration.json')
         pose=self.physics.pose();self.world.segments=pose['segments'];self.world.x,self.world.y,self.world.heading=pose['x'],pose['y'],pose['heading']
         self.physics_stats=pose;self.lock=threading.RLock(); self.paused=True; self.revision=0; self.stats={}; self.error=''
-        self.map_path=ROOT/'maps'/'custom_map.json'; threading.Thread(target=self.run,daemon=True).start()
+        self.interventions=[];self.map_path=ROOT/'maps'/'custom_map.json'; threading.Thread(target=self.run,daemon=True).start()
     def rebuild_physics(self):
         self.physics=MuJoCoLarva(self.world,ROOT/'config'/'trajectory_calibration.json');self.physics_stats=self.physics.pose();self.world.segments=self.physics_stats['segments']
     def run(self):
@@ -30,7 +30,8 @@ class Simulation:
         with self.lock:
             w=self.world
             return {'time':w.time,'paused':self.paused,'error':self.error,'behavior':w.behavior,'segments':w.segments,'heading':w.heading,
-                    'foods_found':w.foods_found,'distance':w.distance,'trail':w.trail,'stats':self.stats,'physics':self.physics_stats,'revision':self.revision,'items':[i.__dict__ for i in w.items]}
+                    'foods_found':w.foods_found,'distance':w.distance,'trail':w.trail,'stats':self.stats,'physics':self.physics_stats,'revision':self.revision,'items':[i.__dict__ for i in w.items],
+                    'knockout':self.brain.knockout_state(),'interventions':self.interventions[-20:]}
     def world_data(self):
         with self.lock:return {'grid':[''.join(r) for r in self.world.grid],'items':[i.__dict__ for i in self.world.items],'revision':self.revision}
     def command(self,d):
@@ -44,8 +45,14 @@ class Simulation:
             elif a=='load':self.world.load(self.map_path);self.brain.reset();self.rebuild_physics();self.revision+=1
             elif a=='garden':self.world.garden();self.brain.reset();self.rebuild_physics();self.paused=True;self.revision+=1
             elif a=='reset':self.world.garden();self.brain.reset();self.rebuild_physics();self.paused=True;self.revision+=1
+            elif a=='knockout':
+                state=self.brain.set_knockout(d.get('indices',[]),d.get('mode','set'))
+                self.interventions.append({'time':self.world.time,'action':'knockout','mode':d.get('mode','set'),'indices':d.get('indices',[]),'count':state['count']})
+            elif a=='clear_knockout':
+                state=self.brain.set_knockout([], 'set')
+                self.interventions.append({'time':self.world.time,'action':'clear_knockout','count':0})
             else:raise ValueError('未知操作')
-        return {'ok':True}
+        return {'ok':True,'knockout':self.brain.knockout_state()}
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--port',type=int,default=8775);ap.add_argument('--no-browser',action='store_true');args=ap.parse_args();sim=Simulation()
@@ -58,6 +65,10 @@ def main():
             p=self.path.split('?')[0]
             if p=='/api/state':return self.js(sim.state())
             if p=='/api/world':return self.js(sim.world_data())
+            if p=='/api/neurons':
+                from urllib.parse import parse_qs,urlsplit
+                query=parse_qs(urlsplit(self.path).query);q=query.get('q',[''])[0];limit=query.get('limit',['60'])[0]
+                with sim.lock:return self.js({'neurons':sim.brain.neuron_catalog(q,limit),'total':sim.brain.n,'knockout':sim.brain.knockout_state()})
             if p=='/':self.path='/web/index.html'
             elif not p.startswith(('/web/','/node_modules/three/')) or '..' in p:return self.send_error(404)
             return super().do_GET()
