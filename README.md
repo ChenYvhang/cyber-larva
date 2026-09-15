@@ -2,6 +2,8 @@
 
 An interactive, closed-loop embodied model of a *Drosophila melanogaster* larva. A sparse neural simulation constrained by the Winding et al. L1 connectome receives environmental sensory signals, modulates a segmental ventral-nerve-cord controller, and drives an 11-segment MuJoCo neuromechanical body in a 3D editable habitat.
 
+**[Play the browser demo](https://chenyvhang.github.io/cyber-larva/)** — no installation required. The online build uses a reduced browser-side segmented controller so GitHub Pages can run it without a server. The local build remains the scientific version with the complete 2,952-node sparse network and MuJoCo contact physics.
+
 ## What is real—and what is modeled
 
 - **Measured prior:** neuron identities, directed topology and synapse-count priors from Winding et al. (2023).

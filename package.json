@@ -3,5 +3,6 @@
   "private": true,
   "type": "module",
   "dependencies": {"three": "0.180.0"},
+  "scripts": {"build:pages": "node tools/build-pages.mjs"},
   "devDependencies": {"playwright": "1.55.1"}
 }

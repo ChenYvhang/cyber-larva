@@ -7,3 +7,4 @@ data/connectome/winding_l1_connectome.npz
 data/connectome/groups.json
 data/connectome/neurons.json
 maps/custom_map.json
+dist/
