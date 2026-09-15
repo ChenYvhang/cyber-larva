@@ -4,6 +4,11 @@ An interactive, closed-loop embodied model of a *Drosophila melanogaster* larva.
 
 **[Play the browser demo](https://chenyvhang.github.io/cyber-larva/)** — no installation required. The online build uses a reduced browser-side segmented controller so GitHub Pages can run it without a server. The local build remains the scientific version with the complete 2,952-node sparse network and MuJoCo contact physics.
 
+## Live browser demos
+
+- [CyberLarva | Drosophila larva](https://chenyvhang.github.io/cyber-larva/)
+- [Cyberfly Explorer | Adult fruit fly](https://chenyvhang.github.io/cyberfly-explorer/)
+
 ## What is real—and what is modeled
 
 - **Measured prior:** neuron identities, directed topology and synapse-count priors from Winding et al. (2023).
