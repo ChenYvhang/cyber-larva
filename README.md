@@ -85,6 +85,8 @@ POST /api/command  {"action":"knockout","mode":"remove","indices":[37]}
 POST /api/command  {"action":"clear_knockout"}
 ```
 
+The first paired validation assay targets the published bilateral MDNa pair. See `experiments/mdna_bilateral_knockout.md` and reproduce its 20-pair control/knockout run with `python tools/run_knockout_experiment.py`. The null result is retained deliberately: it reveals that the current touch controller bypasses MDNa and therefore does not yet reproduce the reported loss-of-function phenotype.
+
 ## Scientific references
 
 - Winding, M. et al. (2023). *The connectome of an insect brain*. Science 379, eadd9330. https://doi.org/10.1126/science.add9330

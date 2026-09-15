@@ -22,5 +22,6 @@ assert 0<=neural.forward<=1 and -1<=neural.turn<=1
 assert neural.knockout_count==1 and brain.disabled[target]
 assert brain.v[target]==0 and brain.rate[target]==0 and brain.last_spikes[target]==0
 assert brain.neuron_catalog(str(brain.neurons[target]['id']),10)
+assert len(brain.neuron_catalog('MDNa',10))==2
 brain.set_knockout([], 'set');assert not brain.disabled.any()
 print({'neurons':brain.n,'connections':brain.W.nnz,'active':neural.active,'distance':round(world.distance,3),'speed_bl_s':round(sum(speeds)/len(speeds),3),'contacts':round(sum(contacts)/len(contacts),1),'engine':pose['engine'],'source':neural.source})

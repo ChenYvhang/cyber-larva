@@ -19,6 +19,14 @@ except ImportError:  # pragma: no cover
 
 
 MODALITIES = ("olfactory", "visual", "warm", "cold", "touch", "proprio", "noci")
+CURATED_IDENTITIES = {
+    "10728333": {"name": "MDNa", "ontology_id": "FBbt_00048558",
+                 "reported_function": "promotes backward locomotion and suppresses forward locomotion",
+                 "identity_source": "Virtual Fly Brain L1EM:10728333"},
+    "18464581": {"name": "MDNa", "ontology_id": "FBbt_00048558",
+                 "reported_function": "promotes backward locomotion and suppresses forward locomotion",
+                 "identity_source": "Virtual Fly Brain L1EM:18464581"},
+}
 
 
 @dataclass
@@ -75,6 +83,8 @@ class ConnectomeBrain:
                  "annotations": ", ".join(membership.get(i, [])), "cluster": ""}
                 for i in range(self.n)
             ]
+        for neuron in self.neurons:
+            neuron.update(CURATED_IDENTITIES.get(str(neuron.get("id", "")), {}))
         self.disabled = np.zeros(self.n, dtype=bool)
         self.v = self.rng.normal(0, .02, self.n).astype(np.float32)
         self.rate = np.zeros(self.n, dtype=np.float32)
@@ -117,7 +127,8 @@ class ConnectomeBrain:
         result = []
         for neuron in self.neurons:
             haystack = " ".join(str(neuron.get(k, "")) for k in
-                                ("index", "id", "side", "celltype", "annotations", "cluster")).lower()
+                                ("index", "id", "name", "side", "celltype", "annotations",
+                                 "cluster", "ontology_id", "reported_function")).lower()
             if query and query not in haystack: continue
             item = dict(neuron); item["disabled"] = int(item["index"]) in selected_set
             result.append(item)
