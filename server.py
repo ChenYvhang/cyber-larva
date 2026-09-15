@@ -23,7 +23,9 @@ class Simulation:
                 start=time.perf_counter()
                 with self.lock:
                     if not self.paused:
-                        n=self.brain.step(self.world.senses());physics_start=time.perf_counter();self.physics_stats=self.physics.step(n,.02);physics_ms=(time.perf_counter()-physics_start)*1000;self.world.sync_physics(self.physics_stats,n,.02);self.stats=n.__dict__|{'physics_ms':physics_ms,'speed_bl_s':self.physics_stats['speed_bl_s'],'curvature_rad_bl':self.physics_stats['curvature_rad_bl']}
+                        n=self.brain.step(self.world.senses());physics_start=time.perf_counter();self.physics_stats=self.physics.step(n,.02);physics_ms=(time.perf_counter()-physics_start)*1000
+                        if self.world.sync_physics(self.physics_stats,n,.02):self.revision+=1
+                        self.stats=n.__dict__|{'physics_ms':physics_ms,'speed_bl_s':self.physics_stats['speed_bl_s'],'curvature_rad_bl':self.physics_stats['curvature_rad_bl']}
                 time.sleep(max(.001,.02-(time.perf_counter()-start)))
         except Exception as exc:self.error=str(exc)
     def state(self):

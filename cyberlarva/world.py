@@ -61,15 +61,17 @@ class LarvaWorld:
                 'touch_lr': float(al)-float(ar), 'proprio': min(1,stretch*2), 'noci': float(ahead)*.18}
 
     def sync_physics(self, pose, neural, dt=.02):
+        items_changed = False
         previous=(self.x,self.y);self.x,self.y,self.heading=pose['x'],pose['y'],pose['heading']
         self.segments=pose['segments'];self.muscles=[s['muscle'] for s in self.segments]
         self.physics_touch=float(bool(pose['contacts']));self.distance+=math.hypot(self.x-previous[0],self.y-previous[1]);self.time+=dt
         self.behavior='backward escape' if neural.backward>.45 else 'head casting' if neural.head_sweep>.58 else 'forward crawling' if neural.forward>.3 else 'resting'
         for item in list(self.items):
             if item.kind=='food' and math.hypot(self.x-item.x,self.y-item.y)<item.radius+.35:
-                self.items.remove(item);self.foods_found+=1;self.behavior='feeding'
+                self.items.remove(item);self.foods_found+=1;self.behavior='feeding';items_changed=True
         if not self.trail or math.hypot(self.x-self.trail[-1][0],self.y-self.trail[-1][1])>.035:self.trail.append([self.x,self.y])
         self.trail=self.trail[-600:]
+        return items_changed
 
     def step(self, neural, dt=.02):
         direction = neural.forward - neural.backward

@@ -65,7 +65,9 @@ class MuJoCoLarva:
         cast_period=1/max(self.targets['head_cast_hz'],.03);cast_age=self.time%cast_period;cast_duration=1.05
         cast_envelope=math.sin(math.pi*cast_age/cast_duration) if cast_age<cast_duration else 0.;cast_sign=-1 if int(self.time/cast_period)%2 else 1
         for i in range(1,N_SEGMENTS):
-            wave=max(0.,math.sin(self.phase+i*.66))*drive;self.muscles[i]=wave;self.data.ctrl[self.axial[i-1]]=-.00082*wave
+            # A smooth, broad posterior-to-anterior pulse makes shortening
+            # continuous instead of snapping between contracted/rest states.
+            wave=max(0.,math.sin(self.phase+i*.66))**1.35*drive;self.muscles[i]=wave;self.data.ctrl[self.axial[i-1]]=-.0010*wave
             head_weight=math.exp(-(i-1)*.28);target=(neural.turn*.82+math.sin(self.bend_phase+i*.13)*neural.head_sweep*.10+cast_sign*cast_envelope*neural.head_sweep*.40)*head_weight*relief
             self.data.ctrl[self.bend[i-1]]=float(np.clip(target,-.7,.7))
         self.muscles[0]=max(0.,math.sin(self.phase))*drive
@@ -91,4 +93,5 @@ class MuJoCoLarva:
             if 'obstacle' in n1+n2:contacts.append('obstacle')
         radii=[.1225+.0325*math.sin(math.pi*i/(N_SEGMENTS-1)) for i in range(N_SEGMENTS)]
         segments=[{'x':float(p[0]),'y':float(p[1]),'z':float(max(p[2],.001)),'radius':r,'muscle':float(self.muscles[i]),'angle':angles[i-1] if i else 0.} for i,(p,r) in enumerate(zip(rendered,radii))]
-        return {'segments':segments,'x':float(rendered[0,0]),'y':float(rendered[0,1]),'heading':heading,'delta_world':float(np.linalg.norm(delta)/WORLD_M),'contacts':contacts,'contact_count':int(self.data.ncon),'speed_bl_s':self.current_speed,'curvature_rad_bl':self.current_curvature,'engine':'MuJoCo '+mujoco.__version__,'targets':self.targets}
+        gaps=np.linalg.norm(points[:-1]-points[1:],axis=1)/SEGMENT_STEP
+        return {'segments':segments,'x':float(rendered[0,0]),'y':float(rendered[0,1]),'heading':heading,'delta_world':float(np.linalg.norm(delta)/WORLD_M),'contacts':contacts,'contact_count':int(self.data.ncon),'speed_bl_s':self.current_speed,'curvature_rad_bl':self.current_curvature,'axial_gap_ratio':[float(v) for v in gaps],'engine':'MuJoCo '+mujoco.__version__,'targets':self.targets}

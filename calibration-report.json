@@ -9,17 +9,17 @@
     "head_cast_rate_hz": 0.11079311229509625
   },
   "observed": {
-    "median_speed_bl_s": 0.2943769215840377,
-    "p95_speed_bl_s": 0.5712475554059274,
-    "turn_curvature_rad_bl": 0.8107821864021703,
-    "mean_contacts": 9.831666666666667,
+    "median_speed_bl_s": 0.2925371474638119,
+    "p95_speed_bl_s": 0.5305569516132774,
+    "turn_curvature_rad_bl": 0.7949357983192771,
+    "mean_contacts": 9.735,
     "crawl_frequency_hz": 1.4100529693226007,
     "head_cast_rate_hz": 0.11079311229509625
   },
   "relative_error": {
-    "median_speed_bl_s": 0.017332539183707116,
-    "p95_speed_bl_s": 0.10684466497044924,
-    "turn_curvature_rad_bl": 0.2356242756903603,
+    "median_speed_bl_s": 0.02347393829023236,
+    "p95_speed_bl_s": 0.17046512079393847,
+    "turn_curvature_rad_bl": 0.25056366949019515,
     "crawl_frequency_hz": 0.0,
     "head_cast_rate_hz": 0.0
   },
